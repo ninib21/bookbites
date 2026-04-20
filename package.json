@@ -1,5 +1,5 @@
 {
-  "name": "pretty-party-sweets",
+  "name": "bookbites",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -15,14 +15,11 @@
   "dependencies": {
     "@hookform/resolvers": "^3.3.4",
     "@prisma/client": "^5.22.0",
-    "@react-three/drei": "^10.7.7",
-    "@react-three/fiber": "^9.6.0",
     "autoprefixer": "^10.5.0",
     "bcrypt": "^5.1.1",
     "bcryptjs": "^3.0.3",
     "clsx": "^2.1.0",
     "date-fns": "^3.3.1",
-    "gsap": "^3.15.0",
     "lucide-react": "^0.469.0",
     "next": "^15.1.0",
     "next-auth": "^4.24.6",
@@ -31,7 +28,6 @@
     "react-hook-form": "^7.51.0",
     "resend": "^3.5.0",
     "tailwind-merge": "^2.2.1",
-    "three": "^0.184.0",
     "zod": "^3.25.76"
   },
   "devDependencies": {
@@ -40,7 +36,6 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "@types/three": "^0.184.0",
     "eslint": "^9",
     "eslint-config-next": "^15.1.0",
     "postcss": "^8",

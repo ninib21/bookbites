@@ -51,7 +51,7 @@ export const sendInquiryConfirmation = async ({
   return resend.emails.send({
     from: FROM_EMAIL,
     to: email,
-    subject: 'Thank You for Your Inquiry - Pretty Party Sweets',
+    subject: 'Thank You for Your Inquiry - BookBites',
     html: `
       <h2>Thank You, ${name}!</h2>
       <p>We've received your inquiry and will get back to you within 24 hours.</p>
@@ -64,7 +64,7 @@ export const sendInquiryConfirmation = async ({
       </ol>
       <p>If you have any questions, feel free to contact us at ${ADMIN_EMAIL}</p>
       <hr>
-      <p><strong>Pretty Party Sweets</strong><br/>
+      <p><strong>BookBites</strong><br/>
       Luxury Candy Tables & Dipped Treats</p>
     `,
   })
@@ -158,7 +158,7 @@ export const sendBookingConfirmation = async ({
   return resend.emails.send({
     from: FROM_EMAIL,
     to: email,
-    subject: `Booking Confirmed - ${reference} | Pretty Party Sweets`,
+    subject: `Booking Confirmed - ${reference} | BookBites`,
     html: `
       <h2>Booking Confirmation</h2>
       <p>Dear ${name},</p>
@@ -181,7 +181,7 @@ export const sendBookingConfirmation = async ({
       <a href="${process.env.NEXT_PUBLIC_SITE_URL}/booking/lookup">Track Your Booking</a></p>
       
       <hr>
-      <p><strong>Pretty Party Sweets</strong><br/>
+      <p><strong>BookBites</strong><br/>
       Luxury Candy Tables & Dipped Treats</p>
     `,
   })
@@ -225,7 +225,7 @@ export const sendBookingStatusUpdate = async ({
       }
       
       <hr>
-      <p><strong>Pretty Party Sweets</strong></p>
+      <p><strong>BookBites</strong></p>
     `,
   })
 }
@@ -245,7 +245,7 @@ export const sendPaymentConfirmation = async ({
   return resend.emails.send({
     from: FROM_EMAIL,
     to: email,
-    subject: `Payment Received - ${reference} | Pretty Party Sweets`,
+    subject: `Payment Received - ${reference} | BookBites`,
     html: `
       <h2>Payment Confirmed</h2>
       <p>Dear ${name},</p>
@@ -257,7 +257,7 @@ export const sendPaymentConfirmation = async ({
       <p>Your booking is now fully secured. We'll contact you closer to your event date to finalize all details.</p>
       
       <hr>
-      <p><strong>Pretty Party Sweets</strong><br/>
+      <p><strong>BookBites</strong><br/>
       Thank you for choosing us for your special event!</p>
     `,
   })
@@ -302,7 +302,7 @@ export const sendPaymentSubmissionNotificationToAdmin = async ({
       <p><a href="${process.env.NEXT_PUBLIC_SITE_URL}/admin/bookings">Review Bookings</a></p>
       
       <hr>
-      <p><strong>Pretty Party Sweets - Admin Notification</strong></p>
+      <p><strong>BookBites - Admin Notification</strong></p>
     `,
   })
 }
@@ -322,7 +322,7 @@ export const sendPaymentConfirmationToClient = async ({
   return resend.emails.send({
     from: FROM_EMAIL,
     to: email,
-    subject: `Payment Confirmed - ${reference} | Pretty Party Sweets`,
+    subject: `Payment Confirmed - ${reference} | BookBites`,
     html: `
       <h2>Payment Confirmed!</h2>
       <p>Dear ${name},</p>
@@ -333,10 +333,10 @@ export const sendPaymentConfirmationToClient = async ({
       
       <p>Your booking is now fully secured. We'll be in touch closer to your event date with final details.</p>
       
-      <p>Thank you for choosing Pretty Party Sweets!</p>
+      <p>Thank you for choosing BookBites!</p>
       
       <hr>
-      <p><strong>Pretty Party Sweets</strong><br/>
+      <p><strong>BookBites</strong><br/>
       Luxury Candy Tables & Dipped Treats</p>
     `,
   })
@@ -375,7 +375,7 @@ export const sendInquiryNotificationToAdmin = async ({
       <p><a href="${process.env.NEXT_PUBLIC_SITE_URL}/admin/leads">View Leads</a></p>
       
       <hr>
-      <p><strong>Pretty Party Sweets - Admin Notification</strong></p>
+      <p><strong>BookBites - Admin Notification</strong></p>
     `,
   })
 }
@@ -420,7 +420,7 @@ export const sendBookingNotificationToAdmin = async ({
       <p><a href="${process.env.NEXT_PUBLIC_SITE_URL}/admin/bookings">Review Bookings</a></p>
       
       <hr>
-      <p><strong>Pretty Party Sweets - Admin Notification</strong></p>
+      <p><strong>BookBites - Admin Notification</strong></p>
     `,
   })
 }
@@ -444,11 +444,11 @@ export const sendBookingConfirmationToClient = async ({
   return resend.emails.send({
     from: FROM_EMAIL,
     to: email,
-    subject: `Booking Received - ${reference} | Pretty Party Sweets`,
+    subject: `Booking Received - ${reference} | BookBites`,
     html: `
       <h2>Booking Request Received!</h2>
       <p>Dear ${name},</p>
-      <p>Thank you for booking with Pretty Party Sweets! We've received your request and are reviewing the details.</p>
+      <p>Thank you for booking with BookBites! We've received your request and are reviewing the details.</p>
       
       <h3>Booking Details:</h3>
       <p><strong>Reference:</strong> ${reference}</p>
@@ -462,7 +462,7 @@ export const sendBookingConfirmationToClient = async ({
       <p><a href="${process.env.NEXT_PUBLIC_SITE_URL}/booking/lookup">Track Your Booking</a></p>
       
       <hr>
-      <p><strong>Pretty Party Sweets</strong><br/>
+      <p><strong>BookBites</strong><br/>
       Luxury Candy Tables & Dipped Treats</p>
     `,
   })
@@ -487,7 +487,7 @@ export const sendBookingApprovalToClient = async ({
   return resend.emails.send({
     from: FROM_EMAIL,
     to: email,
-    subject: `Booking Confirmed - ${reference} | Pretty Party Sweets`,
+    subject: `Booking Confirmed - ${reference} | BookBites`,
     html: `
       <h2>Your Booking is Confirmed!</h2>
       <p>Dear ${name},</p>
@@ -506,7 +506,7 @@ export const sendBookingApprovalToClient = async ({
       <p><a href="${process.env.NEXT_PUBLIC_SITE_URL}/booking/lookup">View Booking Status</a></p>
       
       <hr>
-      <p><strong>Pretty Party Sweets</strong><br/>
+      <p><strong>BookBites</strong><br/>
       Luxury Candy Tables & Dipped Treats</p>
     `,
   })
@@ -531,7 +531,7 @@ export const sendBookingDeclineToClient = async ({
   return resend.emails.send({
     from: FROM_EMAIL,
     to: email,
-    subject: `Booking Update - ${reference} | Pretty Party Sweets`,
+    subject: `Booking Update - ${reference} | BookBites`,
     html: `
       <h2>Booking Update</h2>
       <p>Dear ${name},</p>
@@ -549,7 +549,7 @@ export const sendBookingDeclineToClient = async ({
       <p><a href="${process.env.NEXT_PUBLIC_SITE_URL}/contact">Contact Us</a></p>
       
       <hr>
-      <p><strong>Pretty Party Sweets</strong><br/>
+      <p><strong>BookBites</strong><br/>
       Luxury Candy Tables & Dipped Treats</p>
     `,
   })
@@ -610,7 +610,7 @@ export const sendPaymentDeclineToClient = async ({
   return resend.emails.send({
     from: FROM_EMAIL,
     to: email,
-    subject: `Payment Update - ${reference} | Pretty Party Sweets`,
+    subject: `Payment Update - ${reference} | BookBites`,
     html: `
       <h2>Payment Update</h2>
       <p>Dear ${name},</p>
@@ -624,7 +624,7 @@ export const sendPaymentDeclineToClient = async ({
       <p><a href="${process.env.NEXT_PUBLIC_SITE_URL}/contact">Contact Us</a></p>
       
       <hr>
-      <p><strong>Pretty Party Sweets</strong><br/>
+      <p><strong>BookBites</strong><br/>
       Luxury Candy Tables & Dipped Treats</p>
     `,
   })

@@ -21,11 +21,11 @@ const playfair = Playfair_Display({
 
 export const metadata: Metadata = {
   title: {
-    default: 'Pretty Party Sweets | Luxury Candy Tables & Dipped Treats',
-    template: '%s | Pretty Party Sweets',
+    default: 'BookBites | Luxury Candy Tables & Dipped Treats',
+    template: '%s | BookBites',
   },
   description:
-    'Premium candy tables, custom cakes, and dipped treats for weddings, birthdays, and special events. Making your celebrations sweeter since 2020.',
+    'Premium candy tables, custom cakes, and dipped treats for weddings, birthdays, and special events. Book your sweet experience online.',
   keywords: [
     'candy table',
     'custom cakes',
@@ -34,10 +34,11 @@ export const metadata: Metadata = {
     'birthday party',
     'event catering',
     'sweet table',
+    'book desserts online',
   ],
-  authors: [{ name: 'Pretty Party Sweets' }],
-  creator: 'Pretty Party Sweets',
-  publisher: 'Pretty Party Sweets',
+  authors: [{ name: 'BookBites' }],
+  creator: 'BookBites',
+  publisher: 'BookBites',
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'),
   viewport: {
     width: 'device-width',
@@ -48,14 +49,14 @@ export const metadata: Metadata = {
     type: 'website',
     locale: 'en_US',
     url: '/',
-    title: 'Pretty Party Sweets | Luxury Candy Tables & Dipped Treats',
+    title: 'BookBites | Luxury Candy Tables & Dipped Treats',
     description:
       'Premium candy tables, custom cakes, and dipped treats for weddings, birthdays, and special events.',
-    siteName: 'Pretty Party Sweets',
+    siteName: 'BookBites',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Pretty Party Sweets | Luxury Candy Tables & Dipped Treats',
+    title: 'BookBites | Luxury Candy Tables & Dipped Treats',
     description:
       'Premium candy tables, custom cakes, and dipped treats for weddings, birthdays, and special events.',
   },

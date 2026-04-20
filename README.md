@@ -1,6 +1,6 @@
-# Pretty Party Sweets
+# BookBites
 
-A full-featured website for a custom dessert table and party sweets business, built with Next.js, TypeScript, Tailwind CSS, Prisma, and PostgreSQL.
+A full-featured booking website for custom dessert tables and party sweets, built with Next.js, TypeScript, Tailwind CSS, Prisma, and SQLite.
 
 ## Features
 
@@ -37,8 +37,8 @@ A full-featured website for a custom dessert table and party sweets business, bu
 
 1. Clone the repository:
 ```bash
-git clone <your-repo-url>
-cd pretty-party-sweets
+git clone https://github.com/YOUR_USERNAME/bookbites.git
+cd bookbites
 ```
 
 2. Install dependencies:
@@ -69,7 +69,7 @@ Open [http://localhost:3000](http://localhost:3000) to see the application.
 ## Project Structure
 
 ```
-pretty-party-sweets/
+bookbites/
 ├─ prisma/
 │  └─ schema.prisma          # Database schema
 ├─ public/                    # Static assets

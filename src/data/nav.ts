@@ -40,9 +40,9 @@ export const footerLinks = {
 }
 
 export const siteInfo = {
-  name: 'Pretty Party Sweets',
+  name: 'BookBites',
   tagline: 'Sweet treats, styled tables, unforgettable celebrations',
-  email: 'hello@prettypartysweets.com',
+  email: 'hello@bookbites.com',
   phone: '(555) 214-7789',
   location: 'Greater Celebration County & surrounding areas',
   hours: {
