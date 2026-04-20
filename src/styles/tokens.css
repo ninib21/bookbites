@@ -1,0 +1,41 @@
+:root {
+  /* COLORS - Rose Gold / Cream / Mauve Palette */
+  --color-primary: #D4A5B8;
+  --color-primary-dark: #C08BA0;
+  --color-primary-light: #E8CED8;
+  --color-secondary: #F8F2F0;
+  --color-accent: #C9A5B5;
+
+  --bg-main: #FFFAF8;
+  --bg-section: #FFFFFF;
+
+  --text-primary: #3A2C2C;
+  --text-secondary: #6B5B5B;
+  --text-light: #FFFFFF;
+
+  --border-color: #E8D5D5;
+  --color-cream: #F8F2F0;
+  --color-cream-dark: #F0E6E2;
+  --color-mauve: #C9A5B5;
+  --color-mauve-light: #E0CBD5;
+  --color-gold-star: #D4A574;
+
+  /* FONT */
+  --font-primary: 'Inter', system-ui, sans-serif;
+  --font-display: 'Playfair Display', Georgia, serif;
+
+  /* SPACING */
+  --container-width: 1200px;
+  --section-padding: 80px;
+
+  /* SHADOWS */
+  --shadow-soft: 0 10px 25px rgba(212, 165, 184, 0.08);
+  --shadow-hover: 0 15px 35px rgba(212, 165, 184, 0.15);
+  --shadow-glow: 0 0 20px rgba(212, 165, 184, 0.2);
+  --shadow-modal: 0 25px 60px rgba(58, 44, 44, 0.15);
+
+  /* RADIUS */
+  --radius-lg: 20px;
+  --radius-md: 12px;
+  --radius-sm: 8px;
+}

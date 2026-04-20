@@ -1,0 +1,174 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model AdminUser {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Booking {
+  id                 String         @id @default(uuid())
+  reference          String         @unique
+  leadId             String?        @unique
+  customerName       String
+  customerEmail      String
+  customerPhone      String?
+  eventType          String
+  eventDate          DateTime
+  eventTime          String?
+  venue              String?
+  guestCount         Int
+  packageName        String
+  customizations     String?
+  totalPrice         Float?
+  paymentMethod      String         @default("deposit")
+  status             String         @default("pending")
+  paymentStatus      String         @default("pending")
+  depositAmount      Float?
+  depositPaid        Boolean        @default(false)
+  balanceAmount      Float?
+  balancePaid        Boolean        @default(false)
+  paymentProof       String?
+  paymentDate        DateTime?
+  paymentSubmittedAt DateTime?
+  paymentReviewedAt  DateTime?
+  paymentReviewNote  String?
+  paymentReference   String?
+  agreedToTerms      Boolean        @default(false)
+  adminNotes         String?
+  customerNotes      String?
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+  Lead               Lead?          @relation(fields: [leadId], references: [id])
+  BookingEvent       BookingEvent[]
+
+  @@index([paymentStatus])
+  @@index([customerEmail])
+  @@index([eventDate])
+  @@index([reference])
+  @@index([status])
+}
+
+model BookingEvent {
+  id        String   @id @default(uuid())
+  bookingId String
+  type      String   @default("status_update")
+  status    String?
+  note      String?
+  createdAt DateTime @default(now())
+  Booking   Booking  @relation(fields: [bookingId], references: [id])
+
+  @@index([bookingId])
+}
+
+model ContactMessage {
+  id        String   @id @default(uuid())
+  name      String
+  email     String
+  subject   String
+  message   String
+  status    String   @default("unread")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+}
+
+model GalleryItem {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  imageUrl    String
+  category    String
+  isFeatured  Boolean  @default(false)
+  sortOrder   Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([isFeatured])
+  @@index([category])
+}
+
+model Lead {
+  id              String   @id @default(uuid())
+  name            String
+  email           String
+  phone           String?
+  eventType       String
+  eventDate       DateTime
+  guestCount      Int?
+  packageInterest String?
+  budget          String?
+  message         String?
+  status          String   @default("new")
+  source          String   @default("website")
+  notes           String?
+  bookingId       String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  Booking         Booking?
+
+  @@index([email])
+  @@index([eventDate])
+  @@index([status])
+}
+
+model NotificationSetting {
+  id          String   @id @default(uuid())
+  key         String   @unique
+  value       String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Package {
+  id          String   @id @default(uuid())
+  slug        String   @unique
+  name        String
+  description String
+  price       Float
+  features    String
+  image       String?
+  isActive    Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([isActive])
+}
+
+model Review {
+  id           String   @id @default(uuid())
+  customerName String
+  rating       Int
+  comment      String
+  imageUrl     String?
+  isApproved   Boolean  @default(false)
+  isFeatured   Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([isFeatured])
+  @@index([isApproved])
+}
+
+model SiteSetting {
+  id          String   @id @default(uuid())
+  key         String   @unique
+  value       String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}

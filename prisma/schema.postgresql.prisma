@@ -1,0 +1,208 @@
+// This is your Prisma schema file for PostgreSQL production
+// Learn more: https://pris.ly/d/prisma-schema
+
+// To use this schema:
+// 1. Backup your data: cp prisma/dev.db prisma/dev.db.backup
+// 2. Rename this file: mv prisma/schema.postgresql.prisma prisma/schema.prisma
+// 3. Update .env with your PostgreSQL DATABASE_URL
+// 4. Run: npx prisma migrate deploy
+// 5. Or for fresh start: npx prisma migrate reset
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model AdminUser {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Lead {
+  id              String   @id @default(cuid())
+  name            String
+  email           String
+  phone           String?
+  eventType       String
+  eventDate       DateTime
+  guestCount      Int?
+  packageInterest String?
+  budget          String?
+  message         String?
+  status          String   @default("new")
+  source          String   @default("website")
+  notes           String?
+  bookingId       String?
+  booking         Booking?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([status])
+  @@index([eventDate])
+  @@index([email])
+}
+
+model Booking {
+  id                String   @id @default(cuid())
+  reference         String   @unique
+  leadId            String?  @unique
+  lead              Lead?    @relation(fields: [leadId], references: [id])
+  
+  // Customer details
+  customerName      String
+  customerEmail     String
+  customerPhone     String?
+  
+  // Event details
+  eventType         String
+  eventDate         DateTime
+  eventTime         String?
+  venue             String?
+  guestCount        Int
+  
+  // Package & services
+  packageName       String
+  customizations    String?
+  
+  // Pricing
+  totalPrice        Float?
+  paymentMethod     String   @default("deposit")
+  
+  // Status
+  status            String   @default("pending")
+  paymentStatus     String   @default("pending")
+  
+  // Payment tracking
+  depositAmount     Float?
+  depositPaid       Boolean  @default(false)
+  balanceAmount     Float?
+  balancePaid       Boolean  @default(false)
+  paymentProof      String?
+  paymentDate       DateTime?
+  
+  // Payment submission details
+  paymentSubmittedAt   DateTime?
+  paymentReviewedAt    DateTime?
+  paymentReviewNote    String?
+  paymentReference     String?
+  
+  // Terms
+  agreedToTerms     Boolean  @default(false)
+  
+  // Notes
+  adminNotes        String?
+  customerNotes     String?
+  
+  // Timeline
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  events            BookingEvent[]
+
+  @@index([status])
+  @@index([reference])
+  @@index([eventDate])
+  @@index([customerEmail])
+  @@index([paymentStatus])
+}
+
+model BookingEvent {
+  id          String   @id @default(cuid())
+  bookingId   String
+  booking     Booking  @relation(fields: [bookingId], references: [id])
+  type        String   @default("status_update")
+  status      String?
+  note        String?
+  createdAt   DateTime @default(now())
+
+  @@index([bookingId])
+}
+
+model Package {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  name        String
+  description String
+  price       Float
+  features    String
+  image       String?
+  isActive    Boolean  @default(true)
+  isFeatured  Boolean  @default(false)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([isActive])
+  @@index([isFeatured])
+}
+
+model GalleryItem {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  imageUrl    String
+  category    String
+  isFeatured  Boolean  @default(false)
+  sortOrder   Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([category])
+  @@index([isFeatured])
+  @@index([isActive])
+}
+
+model Review {
+  id           String   @id @default(cuid())
+  customerName String
+  rating       Int
+  comment      String
+  imageUrl     String?
+  isApproved   Boolean  @default(false)
+  isFeatured   Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([isApproved])
+  @@index([isFeatured])
+}
+
+model NotificationSetting {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  value       String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model SiteSetting {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  value       String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model ContactMessage {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  subject   String
+  message   String
+  status    String   @default("unread")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+}

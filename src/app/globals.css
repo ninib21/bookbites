@@ -1,0 +1,83 @@
+@import '../styles/tokens.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-surface text-charcoal font-sans antialiased;
+    padding: 0;
+    margin: 0;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  a {
+    @apply no-underline text-inherit;
+  }
+
+  ::selection {
+    @apply bg-primary-200 text-charcoal;
+  }
+
+  /* Focus ring for all interactive elements */
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-primary-300;
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-cream;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-primary-200 rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-primary-300;
+  }
+}
+
+@layer components {
+  .main-content {
+    min-height: 80vh;
+  }
+
+  .app-root {
+    @apply flex flex-col min-h-screen;
+  }
+
+  /* Form input styles */
+  .form-input {
+    @apply w-full px-4 py-3 bg-white border-2 border-[#E8D5D5] rounded-xl text-charcoal text-base
+           transition-colors duration-200 placeholder:text-muted/60
+           focus:outline-none focus:border-primary-300 focus:ring-2 focus:ring-primary-100;
+  }
+
+  .form-select {
+    @apply form-input appearance-none bg-[url('data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2212%22%20height%3D%2212%22%20viewBox%3D%220%200%2012%2012%22%3E%3Cpath%20fill%3D%22%23C9A5B5%22%20d%3D%22M6%208L1%203h10z%22%2F%3E%3C%2Fsvg%3E')]
+           bg-no-repeat bg-[position:right_16px_center] pr-10;
+  }
+
+  .form-label {
+    @apply text-sm font-semibold text-charcoal mb-2 block;
+  }
+
+  /* Section spacing utilities */
+  .section-padding-sm { @apply py-10 px-5; }
+  .section-padding-md { @apply py-20 px-5; }
+  .section-padding-lg { @apply py-24 px-5; }
+  .section-padding-xl { @apply py-32 px-5; }
+}
