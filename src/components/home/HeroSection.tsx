@@ -52,14 +52,14 @@ export default function HeroSection() {
             ref={titleRef}
             className="font-display text-4xl md:text-5xl lg:text-6xl font-bold text-charcoal leading-tight mb-6"
           >
-            Luxury Candy Tables & Dipped Treats
+            Stop taking messy DMs. Start taking real bookings.
           </h1>
           <p
             ref={subtitleRef}
             className="text-lg md:text-xl text-muted leading-relaxed mb-10 max-w-2xl mx-auto"
           >
-            We create stunning dessert setups for birthdays, baby showers, weddings, and
-            special events.
+            The all-in-one booking and client management platform for food, dessert, and
+            catering businesses.
           </p>
           <div ref={actionsRef} className="flex justify-center gap-4 flex-wrap">
             <Button href="/inquire" variant="primary" size="lg">

@@ -1,17 +1,26 @@
+/**
+ * BookBites SaaS - Multi-Tenant Authentication
+ *
+ * JWT-based session management for business users.
+ * Sessions are stored in the BusinessSession table (DB-backed).
+ */
+
 import bcrypt from 'bcryptjs'
 import { cookies } from 'next/headers'
 import { NextRequest } from 'next/server'
+import { prisma } from './prisma'
+import type { BusinessSessionData, UserRole, SubscriptionTier } from '@/types'
 
-const SESSION_COOKIE = 'admin_session'
-const SESSION_DURATION = 24 * 60 * 60 * 1000 // 24 hours
+const SESSION_COOKIE = 'bb_session'
+const SESSION_DURATION = 7 * 24 * 60 * 60 * 1000 // 7 days
 
-// Hash password with bcrypt
+// ─── Password helpers ─────────────────────────────────────────────
+
 export const hashPassword = async (password: string): Promise<string> => {
-  const salt = await bcrypt.genSalt(12) // 12 rounds for security
+  const salt = await bcrypt.genSalt(12)
   return bcrypt.hash(password, salt)
 }
 
-// Verify password
 export const verifyPassword = async (
   password: string,
   hashedPassword: string
@@ -19,126 +28,141 @@ export const verifyPassword = async (
   return bcrypt.compare(password, hashedPassword)
 }
 
-// Generate secure session token
+// ─── Session token generation ─────────────────────────────────────
+
 const generateSessionToken = (): string => {
   const array = new Uint8Array(32)
   crypto.getRandomValues(array)
   return Array.from(array, (byte) => byte.toString(16).padStart(2, '0')).join('')
 }
 
-// Create session
-export const createSession = async (email: string): Promise<string> => {
+// ─── Create session ───────────────────────────────────────────────
+
+export const createSession = async (userId: string): Promise<string> => {
   const token = generateSessionToken()
   const expiresAt = new Date(Date.now() + SESSION_DURATION)
 
-  // Store session in cookie
+  await prisma.businessSession.create({
+    data: {
+      userId,
+      token,
+      expiresAt,
+    },
+  })
+
   const cookieStore = await cookies()
   cookieStore.set(SESSION_COOKIE, token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
+    sameSite: 'lax',
     expires: expiresAt,
     path: '/',
-  })
-
-  // Store session data (in production, use Redis or database)
-  // For now, we'll store in a simple in-memory map (resets on server restart)
-  sessions.set(token, {
-    email,
-    expiresAt,
-    createdAt: new Date(),
   })
 
   return token
 }
 
-// Simple in-memory session store (replace with Redis in production)
-const sessions = new Map<
-  string,
-  {
-    email: string
-    expiresAt: Date
-    createdAt: Date
-  }
->()
+// ─── Get session data (from request) ──────────────────────────────
 
-// Verify session
-export const verifySession = async (
-  request: NextRequest
-): Promise<{ email: string } | null> => {
-  const token = request.cookies.get(SESSION_COOKIE)?.value
+export const getSession = async (
+  request?: NextRequest
+): Promise<BusinessSessionData | null> => {
+  let token: string | undefined
 
-  if (!token) {
-    return null
+  if (request) {
+    token = request.cookies.get(SESSION_COOKIE)?.value
+  } else {
+    const cookieStore = await cookies()
+    token = cookieStore.get(SESSION_COOKIE)?.value
   }
 
-  const session = sessions.get(token)
+  if (!token) return null
 
-  if (!session) {
-    return null
-  }
+  const session = await prisma.businessSession.findUnique({
+    where: { token },
+    include: {
+      user: {
+        include: {
+          business: {
+            select: {
+              id: true,
+              name: true,
+              slug: true,
+              subscriptionTier: true,
+            },
+          },
+        },
+      },
+    },
+  })
 
-  // Check if session is expired
+  if (!session) return null
+
+  // Check expiry
   if (new Date() > session.expiresAt) {
-    sessions.delete(token)
+    await prisma.businessSession.delete({ where: { id: session.id } })
     return null
   }
 
-  return { email: session.email }
+  // Check user is active
+  if (!session.user.isActive) {
+    await prisma.businessSession.delete({ where: { id: session.id } })
+    return null
+  }
+
+  return {
+    userId: session.user.id,
+    email: session.user.email,
+    name: session.user.name,
+    role: session.user.role as UserRole,
+    businessId: session.user.businessId,
+    businessName: session.user.business.name,
+    businessSlug: session.user.business.slug,
+    subscriptionTier: session.user.business.subscriptionTier as SubscriptionTier,
+  }
 }
 
-// Verify session from cookies (server components)
-export const verifySessionFromCookies = async (): Promise<{
-  email: string
-} | null> => {
-  const cookieStore = await cookies()
-  const token = cookieStore.get(SESSION_COOKIE)?.value
+// ─── Destroy session ──────────────────────────────────────────────
 
-  if (!token) {
-    return null
-  }
-
-  const session = sessions.get(token)
-
-  if (!session || new Date() > session.expiresAt) {
-    if (session) sessions.delete(token)
-    return null
-  }
-
-  return { email: session.email }
-}
-
-// Destroy session (logout)
 export const destroySession = async (): Promise<void> => {
   const cookieStore = await cookies()
   const token = cookieStore.get(SESSION_COOKIE)?.value
 
   if (token) {
-    sessions.delete(token)
+    await prisma.businessSession.deleteMany({ where: { token } })
   }
 
   cookieStore.delete(SESSION_COOKIE)
 }
 
-// Rate limiting for login attempts
+// ─── Clean up expired sessions ────────────────────────────────────
+
+export const cleanupExpiredSessions = async (): Promise<void> => {
+  await prisma.businessSession.deleteMany({
+    where: {
+      expiresAt: { lt: new Date() },
+    },
+  })
+}
+
+// ─── Rate limiting (in-memory, replace with Redis in prod) ────────
+
 const loginAttempts = new Map<string, { count: number; resetAt: Date }>()
 
 export const checkRateLimit = (identifier: string): boolean => {
   const now = new Date()
   const attempt = loginAttempts.get(identifier)
 
-  // Reset after 15 minutes
   if (attempt && now > attempt.resetAt) {
     loginAttempts.delete(identifier)
   }
 
   const current = loginAttempts.get(identifier)
-
   if (current && current.count >= 5) {
-    return false // Rate limited
+    return false
   }
 
-  return true // Allowed
+  return true
 }
 
 export const recordLoginAttempt = (identifier: string): void => {
@@ -150,41 +174,59 @@ export const recordLoginAttempt = (identifier: string): void => {
   } else {
     loginAttempts.set(identifier, {
       count: 1,
-      resetAt: new Date(now.getTime() + 15 * 60 * 1000), // 15 minutes
+      resetAt: new Date(now.getTime() + 15 * 60 * 1000),
     })
   }
 }
 
-// Clear rate limit (on successful login)
 export const clearRateLimit = (identifier: string): void => {
   loginAttempts.delete(identifier)
 }
 
-// Validate admin credentials
-export const validateAdminCredentials = async (
+// ─── Verification tokens ──────────────────────────────────────────
+
+export const generateVerificationToken = async (
   email: string,
-  password: string
-): Promise<boolean> => {
-  const adminEmail = process.env.ADMIN_EMAIL
-  const adminPasswordHash = process.env.ADMIN_PASSWORD_HASH
+  type: string = 'email_verification'
+): Promise<string> => {
+  const token = generateSessionToken()
+  const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours
 
-  if (!adminEmail || !adminPasswordHash) {
-    console.error('Admin credentials not configured')
-    return false
-  }
+  await prisma.verificationToken.create({
+    data: {
+      email,
+      token,
+      type,
+      expiresAt,
+    },
+  })
 
-  if (email !== adminEmail) {
-    return false
-  }
-
-  return verifyPassword(password, adminPasswordHash)
+  return token
 }
 
-// Initialize admin password hash (run once to generate hash)
-export const generateAdminPasswordHash = async (): Promise<string> => {
-  const password = process.env.ADMIN_PASSWORD
-  if (!password) {
-    throw new Error('ADMIN_PASSWORD not set in environment')
+export const verifyEmailToken = async (
+  token: string
+): Promise<{ email: string; type: string } | null> => {
+  const record = await prisma.verificationToken.findUnique({
+    where: { token },
+  })
+
+  if (!record) return null
+
+  // Check expiry
+  if (new Date() > record.expiresAt) {
+    await prisma.verificationToken.delete({ where: { id: record.id } })
+    return null
   }
-  return hashPassword(password)
+
+  // Check already used
+  if (record.usedAt) return null
+
+  // Mark as used
+  await prisma.verificationToken.update({
+    where: { id: record.id },
+    data: { usedAt: new Date() },
+  })
+
+  return { email: record.email, type: record.type }
 }

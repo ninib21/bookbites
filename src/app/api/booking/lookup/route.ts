@@ -1,52 +1,35 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { bookingLookupSchema } from '@/lib/validators/bookingLookup'
 
+// Lookup a booking by reference + email (public, for client status check)
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    
-    // Validate request body
-    const validation = bookingLookupSchema.safeParse(body)
-    
-    if (!validation.success) {
-      return NextResponse.json(
-        { 
-          error: 'Validation failed',
-          details: validation.error.errors 
-        },
-        { status: 400 }
-      )
+    const { reference, email } = body
+
+    if (!reference || !email) {
+      return NextResponse.json({ error: 'Reference and email are required' }, { status: 400 })
     }
 
-    const { reference, email } = validation.data
-
-    // Look up booking by reference and email
-    const booking = await prisma.booking.findFirst({
+    const booking = await prisma.businessBooking.findFirst({
       where: {
         reference,
         customerEmail: email,
       },
       include: {
-        BookingEvent: {
-          orderBy: {
-            createdAt: 'desc',
-          },
+        events: {
+          orderBy: { createdAt: 'desc' },
         },
       },
     })
 
     if (!booking) {
       return NextResponse.json(
-        { 
-          error: 'Booking not found',
-          message: 'No booking found with that reference and email'
-        },
+        { error: 'No booking found with that reference and email' },
         { status: 404 }
       )
     }
 
-    // Return booking details (exclude sensitive fields)
     return NextResponse.json({
       success: true,
       booking: {
@@ -58,20 +41,16 @@ export async function POST(request: NextRequest) {
         eventType: booking.eventType,
         venue: booking.venue,
         guestCount: booking.guestCount,
-        packageName: booking.packageName,
         customerName: booking.customerName,
+        totalPrice: booking.totalPrice,
+        depositAmount: booking.depositAmount,
+        balanceAmount: booking.balanceAmount,
         createdAt: booking.createdAt,
-        BookingEvent: booking.BookingEvent,
+        events: booking.events,
       },
     })
   } catch (error) {
     console.error('Booking lookup error:', error)
-    return NextResponse.json(
-      { 
-        error: 'Failed to lookup booking',
-        details: error instanceof Error ? error.message : 'Unknown error'
-      },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Failed to lookup booking' }, { status: 500 })
   }
 }

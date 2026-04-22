@@ -1,3 +1,6 @@
+// BookBites Vertical SaaS - Multi-Tenant Schema
+// Platform for food, dessert & catering businesses
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -7,69 +10,627 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model AdminUser {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  password  String
-  name      String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+// ─── Business (Tenant) ────────────────────────────────────────────
+
+model Business {
+  id                   String              @id @default(uuid())
+  name                 String
+  slug                 String              @unique
+  email                String
+  phone                String?
+  logoUrl              String?
+  primaryColor         String              @default("#D4A5B8")
+  description          String?
+  address              String?
+  city                 String?
+  state                String?
+  zipCode              String?
+  country              String              @default("US")
+  latitude             Float?
+  longitude            Float?
+  isActive             Boolean             @default(true)
+  isVerified           Boolean             @default(false)
+  subscriptionTier     String              @default("FREE") // FREE, PRO, ENTERPRISE
+  subscriptionStatus   String              @default("ACTIVE") // ACTIVE, PAST_DUE, CANCELLED, TRIALING
+  subscriptionExpiresAt DateTime?
+  stripeAccountId      String?
+  cashAppTag           String?
+  cryptoWalletAddress  String?
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
+
+  // Relations
+  settings             BusinessSettings?
+  users                BusinessUser[]
+  services             Service[]
+  packages             BusinessPackage[]
+  bookings             BusinessBooking[]
+  galleryItems         BusinessGalleryItem[]
+  reviews              BusinessReview[]
+  leads                BusinessLead[]
+  clients              Client[]
+  orders               CustomOrder[]
+  menuCategories       MenuCategory[]
+  menuItems            MenuItem[]
+  cateringProfile      CateringProfile?
+  invoices             Invoice[]
+  notifications        BusinessNotification[]
+
+  @@index([slug])
+  @@index([isActive])
+  @@index([subscriptionTier])
 }
 
-model Booking {
-  id                 String         @id @default(uuid())
-  reference          String         @unique
-  leadId             String?        @unique
-  customerName       String
-  customerEmail      String
-  customerPhone      String?
-  eventType          String
-  eventDate          DateTime
-  eventTime          String?
-  venue              String?
-  guestCount         Int
-  packageName        String
-  customizations     String?
-  totalPrice         Float?
-  paymentMethod      String         @default("deposit")
-  status             String         @default("pending")
-  paymentStatus      String         @default("pending")
-  depositAmount      Float?
-  depositPaid        Boolean        @default(false)
-  balanceAmount      Float?
-  balancePaid        Boolean        @default(false)
-  paymentProof       String?
-  paymentDate        DateTime?
-  paymentSubmittedAt DateTime?
-  paymentReviewedAt  DateTime?
-  paymentReviewNote  String?
-  paymentReference   String?
-  agreedToTerms      Boolean        @default(false)
-  adminNotes         String?
-  customerNotes      String?
-  createdAt          DateTime       @default(now())
-  updatedAt          DateTime       @updatedAt
-  Lead               Lead?          @relation(fields: [leadId], references: [id])
-  BookingEvent       BookingEvent[]
+model BusinessSettings {
+  id                   String    @id @default(uuid())
+  businessId           String    @unique
+  allowOnlineBooking   Boolean   @default(true)
+  allowCustomOrders    Boolean   @default(true)
+  allowCatering        Boolean   @default(false)
+  requireDeposit       Boolean   @default(false)
+  depositPercentage    Int        @default(50)
+  emailNotifications   Boolean   @default(true)
+  smsNotifications     Boolean   @default(false)
+  customDomain         String?
+  bookingPageSlug      String    @default("book")
+  timezone             String    @default("America/New_York")
+  currency             String    @default("USD")
+  taxRate              Float     @default(0)
+  businessHours        String?   // JSON: { mon: "9-18", tue: "9-18", ... }
+  blackoutDates        String?   // JSON: ["2026-12-25", ...]
+  minBookingNotice     Int        @default(48)  // hours
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
 
-  @@index([paymentStatus])
-  @@index([customerEmail])
-  @@index([eventDate])
+  business             Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@index([bookingPageSlug])
+}
+
+// ─── Business Users ───────────────────────────────────────────────
+
+model BusinessUser {
+  id              String    @id @default(uuid())
+  email           String    @unique
+  password        String
+  name            String?
+  role            String    @default("OWNER") // OWNER, ADMIN, STAFF
+  emailVerified   DateTime?
+  businessId      String
+  isActive        Boolean   @default(true)
+  lastLoginAt     DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  business        Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  sessions        BusinessSession[]
+
+  @@index([businessId])
+  @@index([email])
+  @@index([role])
+}
+
+model BusinessSession {
+  id          String    @id @default(uuid())
+  userId      String
+  token       String    @unique
+  expiresAt   DateTime
+  ipAddress   String?
+  userAgent   String?
+  createdAt   DateTime  @default(now())
+
+  user        BusinessUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model VerificationToken {
+  id          String    @id @default(uuid())
+  email       String
+  token       String    @unique
+  type        String    @default("email_verification") // email_verification, password_reset
+  expiresAt   DateTime
+  usedAt      DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@index([token])
+  @@index([email])
+  @@index([expiresAt])
+}
+
+// ─── Services & Packages ──────────────────────────────────────────
+
+model Service {
+  id          String    @id @default(uuid())
+  name        String
+  description String?
+  price       Float
+  duration    Int       // minutes
+  imageUrl    String?
+  isActive    Boolean   @default(true)
+  category    String?   // custom_orders, event_booking, catering
+  sortOrder   Int       @default(0)
+  businessId  String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  business    Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  bookings    BusinessBooking[]
+
+  @@index([businessId])
+  @@index([isActive])
+  @@index([category])
+}
+
+model BusinessPackage {
+  id          String    @id @default(uuid())
+  name        String
+  description String
+  price       Float
+  features    String    // JSON array
+  imageUrl    String?
+  isActive    Boolean   @default(true)
+  isPopular   Boolean   @default(false)
+  category    String?   // custom_orders, event_booking, catering
+  pricingType String    @default("flat") // flat, per_person
+  sortOrder   Int       @default(0)
+  businessId  String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  business    Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  bookings    BusinessBooking[]
+
+  @@index([businessId])
+  @@index([isActive])
+  @@index([isPopular])
+}
+
+// ─── Bookings ─────────────────────────────────────────────────────
+
+model BusinessBooking {
+  id                   String   @id @default(uuid())
+  reference            String   @unique
+  businessId           String
+  clientId             String?
+
+  // Customer details
+  customerName         String
+  customerEmail        String
+  customerPhone        String?
+
+  // Event details
+  eventType            String
+  eventDate            DateTime
+  eventTime            String?
+  venue                String?
+  guestCount           Int
+
+  // Service & package
+  serviceId            String?
+  packageId            String?
+  customizations       String?
+
+  // Pricing
+  totalPrice           Float?
+  depositAmount        Float?
+  depositPaid          Boolean  @default(false)
+  balanceAmount        Float?
+  balancePaid          Boolean  @default(false)
+
+  // Payment
+  paymentMethod        String   @default("MANUAL") // MANUAL, CARD, CASHAPP, CRYPTO, APPLE_PAY
+  paymentStatus        String   @default("PENDING") // PENDING, AWAITING_PAYMENT, SUBMITTED, APPROVED, DECLINED, REFUNDED
+  paymentProof         String?
+  paymentDate          DateTime?
+  paymentSubmittedAt   DateTime?
+  paymentReviewedAt    DateTime?
+  paymentReviewNote    String?
+  paymentReference     String?
+  stripePaymentIntentId String?
+  cryptoTransactionId  String?
+  cashAppReference     String?
+
+  // Status
+  status               String   @default("PENDING") // PENDING, CONFIRMED, IN_PROGRESS, COMPLETED, CANCELLED, DECLINED
+
+  // Notes
+  adminNotes           String?
+  customerNotes        String?
+  agreedToTerms        Boolean  @default(false)
+
+  // Dietary / allergy info
+  dietaryNotes         String?
+  allergyInfo          String?
+
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  business             Business          @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  client               Client?           @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  service              Service?          @relation(fields: [serviceId], references: [id], onDelete: SetNull)
+  package              BusinessPackage?  @relation(fields: [packageId], references: [id], onDelete: SetNull)
+  events               BusinessBookingEvent[]
+  invoice              Invoice?
+
+  @@index([businessId])
   @@index([reference])
   @@index([status])
+  @@index([paymentStatus])
+  @@index([eventDate])
+  @@index([customerEmail])
+  @@index([clientId])
 }
 
-model BookingEvent {
-  id        String   @id @default(uuid())
-  bookingId String
-  type      String   @default("status_update")
-  status    String?
-  note      String?
-  createdAt DateTime @default(now())
-  Booking   Booking  @relation(fields: [bookingId], references: [id])
+model BusinessBookingEvent {
+  id          String    @id @default(uuid())
+  bookingId   String
+  type        String    @default("status_update")
+  status      String?
+  note        String?
+  createdAt   DateTime  @default(now())
+
+  booking     BusinessBooking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
 
   @@index([bookingId])
+  @@index([createdAt])
 }
+
+// ─── Custom Orders ────────────────────────────────────────────────
+
+model CustomOrder {
+  id              String   @id @default(uuid())
+  businessId      String
+  clientId        String?
+  reference       String   @unique
+
+  // Customer details (denormalized for walk-ins)
+  customerName    String
+  customerEmail   String
+  customerPhone   String?
+
+  // Order details
+  orderType       String   @default("custom") // custom, pickup, delivery
+  pickupDate      DateTime?
+  pickupTime      String?
+  deliveryAddress String?
+
+  // Pricing
+  subtotal        Float    @default(0)
+  tax             Float    @default(0)
+  total           Float    @default(0)
+
+  // Status
+  status          String   @default("RECEIVED") // RECEIVED, CONFIRMED, IN_PROGRESS, READY, PICKED_UP, DELIVERED, CANCELLED
+
+  // Notes
+  specialInstructions String?
+  allergyInfo      String?
+  adminNotes       String?
+
+  // Attachments (cake design references, etc.)
+  attachments     String?  // JSON array of URLs
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  business        Business    @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  client          Client?     @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  items           OrderItem[]
+  invoice         Invoice?
+
+  @@index([businessId])
+  @@index([reference])
+  @@index([status])
+  @@index([clientId])
+  @@index([pickupDate])
+}
+
+model OrderItem {
+  id              String     @id @default(uuid())
+  orderId         String
+  menuItemId      String?
+
+  // Snapshot of item at time of order
+  name            String
+  description     String?
+  quantity        Int        @default(1)
+  unitPrice       Float
+  totalPrice      Float
+  customizations  String?    // JSON: custom text, flavor, size, etc.
+  dietaryFlags    String?    // JSON: { vegetarian: true, nutFree: true, etc. }
+
+  createdAt       DateTime   @default(now())
+
+  order           CustomOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+  @@index([menuItemId])
+}
+
+// ─── Menu ─────────────────────────────────────────────────────────
+
+model MenuCategory {
+  id          String    @id @default(uuid())
+  businessId  String
+  name        String
+  description String?
+  icon        String?
+  isActive    Boolean   @default(true)
+  sortOrder   Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  business    Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  items       MenuItem[]
+
+  @@index([businessId])
+  @@index([isActive])
+  @@index([sortOrder])
+}
+
+model MenuItem {
+  id              String    @id @default(uuid())
+  categoryId      String
+  businessId      String
+  name            String
+  description     String?
+  price           Float
+  imageUrl        String?
+  isActive        Boolean   @default(true)
+  isAvailable     Boolean   @default(true) // toggle for temp unavailability
+  dietaryFlags    String?   // JSON: { vegetarian, vegan, glutenFree, nutFree, dairyFree }
+  customOptions   String?   // JSON: [{ name: "Size", options: ["Small", "Medium", "Large"] }]
+  sortOrder       Int       @default(0)
+  preparationTime Int?      // minutes
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  category        MenuCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  business        Business     @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@index([categoryId])
+  @@index([businessId])
+  @@index([isActive])
+  @@index([isAvailable])
+  @@index([sortOrder])
+}
+
+// ─── Catering ─────────────────────────────────────────────────────
+
+model CateringProfile {
+  id                String    @id @default(uuid())
+  businessId        String    @unique
+  isEnabled         Boolean   @default(false)
+  minGuestCount     Int       @default(20)
+  maxGuestCount     Int?
+  deliveryRadius    Int?      // miles
+  deliveryFee       Float?
+  staffCount        Int       @default(1)
+  staffRatePerHour  Float?
+  setupTime         Int        @default(60)  // minutes
+  breakdownTime     Int        @default(30)  // minutes
+  requiresTasting   Boolean   @default(false)
+  tastingFee        Float?
+  availableCuisines String?   // JSON array
+  equipmentProvided String?   // JSON array: chafing dishes, serving utensils, etc.
+  terms             String?   // catering terms & conditions
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  business          Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@index([businessId])
+  @@index([isEnabled])
+}
+
+// ─── Clients (CRM) ────────────────────────────────────────────────
+
+model Client {
+  id              String    @id @default(uuid())
+  businessId      String
+  name            String
+  email           String
+  phone           String?
+  company         String?
+  address         String?
+  notes           String?
+  tags            String?   // JSON array: ["VIP", "REPEAT", "CORPORATE", "NEW", "LEAD"]
+  source          String    @default("manual") // manual, website, referral, import
+  lifetimeValue   Float     @default(0)
+  totalBookings   Int       @default(0)
+  totalOrders     Int       @default(0)
+  lastContactAt   DateTime?
+  isActive        Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  business        Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  bookings        BusinessBooking[]
+  orders          CustomOrder[]
+  communications  ClientCommunication[]
+  invoices        Invoice[]
+
+  @@unique([businessId, email])
+  @@index([businessId])
+  @@index([email])
+  @@index([source])
+  @@index([lifetimeValue])
+}
+
+model ClientCommunication {
+  id          String    @id @default(uuid())
+  clientId    String
+  type        String    // email, call, note, sms
+  subject     String?
+  body        String
+  createdAt   DateTime  @default(now())
+
+  client      Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@index([clientId])
+  @@index([createdAt])
+}
+
+// ─── Gallery ──────────────────────────────────────────────────────
+
+model BusinessGalleryItem {
+  id          String    @id @default(uuid())
+  businessId  String
+  title       String
+  description String?
+  imageUrl    String
+  category    String
+  isFeatured  Boolean   @default(false)
+  sortOrder   Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  business    Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@index([businessId])
+  @@index([category])
+  @@index([isFeatured])
+}
+
+// ─── Reviews ──────────────────────────────────────────────────────
+
+model BusinessReview {
+  id            String    @id @default(uuid())
+  businessId    String
+  customerName  String
+  rating        Int
+  comment       String
+  imageUrl      String?
+  isApproved    Boolean   @default(false)
+  isFeatured    Boolean   @default(false)
+  source        String    @default("website") // website, google, manual
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  business      Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@index([businessId])
+  @@index([isApproved])
+  @@index([isFeatured])
+  @@index([rating])
+}
+
+// ─── Leads ────────────────────────────────────────────────────────
+
+model BusinessLead {
+  id          String    @id @default(uuid())
+  businessId  String
+  name        String
+  email       String
+  phone       String?
+  eventType   String
+  eventDate   DateTime?
+  guestCount  Int?
+  message     String?
+  source      String    @default("website") // website, referral, manual, import
+  status      String    @default("NEW") // NEW, CONTACTED, QUALIFIED, CONVERTED, LOST
+  notes       String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  business    Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@index([businessId])
+  @@index([status])
+  @@index([email])
+  @@index([eventDate])
+  @@index([source])
+}
+
+// ─── Invoices ─────────────────────────────────────────────────────
+
+model Invoice {
+  id              String   @id @default(uuid())
+  businessId      String
+  invoiceNumber   String   @unique
+  clientId        String?
+  bookingId       String?  @unique
+  orderId         String?  @unique
+
+  // Bill to
+  billToName      String
+  billToEmail     String
+  billToAddress   String?
+
+  // Details
+  issueDate       DateTime @default(now())
+  dueDate         DateTime?
+  status          String   @default("DRAFT") // DRAFT, SENT, PAID, PARTIALLY_PAID, OVERDUE, CANCELLED
+
+  // Totals
+  subtotal        Float    @default(0)
+  taxRate         Float    @default(0)
+  taxAmount       Float    @default(0)
+  total           Float    @default(0)
+  amountPaid      Float    @default(0)
+  amountDue       Float    @default(0)
+
+  // Payment
+  paymentMethod   String   @default("MANUAL") // MANUAL, CARD, CASHAPP, CRYPTO, APPLE_PAY
+  paymentTerms    String   @default("due_on_receipt") // due_on_receipt, net_15, net_30
+  notes           String?
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  business        Business          @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  client          Client?           @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  booking         BusinessBooking?  @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+  order           CustomOrder?      @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  lineItems       InvoiceLineItem[]
+
+  @@index([businessId])
+  @@index([invoiceNumber])
+  @@index([status])
+  @@index([clientId])
+  @@index([dueDate])
+}
+
+model InvoiceLineItem {
+  id          String   @id @default(uuid())
+  invoiceId   String
+  description String
+  quantity    Int      @default(1)
+  unitPrice   Float
+  totalPrice  Float
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+
+  invoice     Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@index([invoiceId])
+}
+
+// ─── Notifications ────────────────────────────────────────────────
+
+model BusinessNotification {
+  id          String    @id @default(uuid())
+  businessId  String
+  userId      String?
+  type        String    // booking_new, payment_received, order_update, review_new, etc.
+  title       String
+  message     String
+  isRead      Boolean   @default(false)
+  actionUrl   String?
+  createdAt   DateTime  @default(now())
+
+  business    Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@index([businessId])
+  @@index([userId])
+  @@index([isRead])
+  @@index([createdAt])
+}
+
+// ─── Landing Site Models (non-tenant) ─────────────────────────────
 
 model ContactMessage {
   id        String   @id @default(uuid())
@@ -84,86 +645,6 @@ model ContactMessage {
   @@index([status])
 }
 
-model GalleryItem {
-  id          String   @id @default(uuid())
-  title       String
-  description String?
-  imageUrl    String
-  category    String
-  isFeatured  Boolean  @default(false)
-  sortOrder   Int      @default(0)
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  @@index([isFeatured])
-  @@index([category])
-}
-
-model Lead {
-  id              String   @id @default(uuid())
-  name            String
-  email           String
-  phone           String?
-  eventType       String
-  eventDate       DateTime
-  guestCount      Int?
-  packageInterest String?
-  budget          String?
-  message         String?
-  status          String   @default("new")
-  source          String   @default("website")
-  notes           String?
-  bookingId       String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  Booking         Booking?
-
-  @@index([email])
-  @@index([eventDate])
-  @@index([status])
-}
-
-model NotificationSetting {
-  id          String   @id @default(uuid())
-  key         String   @unique
-  value       String
-  description String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-}
-
-model Package {
-  id          String   @id @default(uuid())
-  slug        String   @unique
-  name        String
-  description String
-  price       Float
-  features    String
-  image       String?
-  isActive    Boolean  @default(true)
-  sortOrder   Int      @default(0)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  @@index([isActive])
-}
-
-model Review {
-  id           String   @id @default(uuid())
-  customerName String
-  rating       Int
-  comment      String
-  imageUrl     String?
-  isApproved   Boolean  @default(false)
-  isFeatured   Boolean  @default(false)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-
-  @@index([isFeatured])
-  @@index([isApproved])
-}
-
 model SiteSetting {
   id          String   @id @default(uuid())
   key         String   @unique
@@ -171,4 +652,23 @@ model SiteSetting {
   description String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+model SubscriptionPlan {
+  id              String   @id @default(uuid())
+  name            String   @unique
+  tier            String   @unique // FREE, PRO, ENTERPRISE
+  price           Float
+  billingInterval String   @default("monthly") // monthly, yearly
+  features        String   // JSON array of feature strings
+  bookingLimit    Int?     // null = unlimited
+  orderLimit      Int?     // null = unlimited
+  clientLimit     Int?     // null = unlimited
+  isActive        Boolean  @default(true)
+  sortOrder       Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([tier])
+  @@index([isActive])
 }

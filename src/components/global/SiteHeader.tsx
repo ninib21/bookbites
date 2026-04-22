@@ -5,7 +5,6 @@ import { useState, useEffect } from 'react'
 import { Menu, X } from 'lucide-react'
 import { mainNav, siteInfo } from '@/data/nav'
 import { cn } from '@/lib/utils'
-import Button from '@/components/ui/Button'
 
 export default function SiteHeader() {
   const [menuOpen, setMenuOpen] = useState(false)
@@ -19,7 +18,6 @@ export default function SiteHeader() {
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
-  // Close menu on resize
   useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth >= 768) setMenuOpen(false)
@@ -28,7 +26,6 @@ export default function SiteHeader() {
     return () => window.removeEventListener('resize', handleResize)
   }, [])
 
-  // Prevent body scroll when menu is open
   useEffect(() => {
     document.body.style.overflow = menuOpen ? 'hidden' : ''
     return () => { document.body.style.overflow = '' }
@@ -39,19 +36,18 @@ export default function SiteHeader() {
       className={cn(
         'sticky top-0 z-[100] transition-all duration-300',
         scrolled
-          ? 'bg-white/80 backdrop-blur-lg shadow-soft border-b border-[#E8D5D5]/50'
+          ? 'bg-white/90 backdrop-blur-lg shadow-soft border-b border-gray-200/50'
           : 'bg-white/60 backdrop-blur-md border-b border-transparent'
       )}
     >
-      <div className="max-w-container mx-auto px-5 py-4 flex items-center justify-between">
+      <div className="max-w-6xl mx-auto px-5 py-4 flex items-center justify-between">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2 group">
-          <div className="w-9 h-9 bg-primary-300 rounded-full flex items-center justify-center transition-transform group-hover:scale-105">
-            <span className="text-white font-display font-bold text-lg">P</span>
+          <div className="w-9 h-9 bg-primary-300 rounded-lg flex items-center justify-center transition-transform group-hover:scale-105">
+            <span className="text-white font-display font-bold text-lg">B</span>
           </div>
           <span className="font-display text-xl font-bold text-charcoal tracking-tight">
-            {siteInfo.name.split(' ')[0]}{' '}
-            <span className="text-primary-300">{siteInfo.name.split(' ').slice(1).join(' ')}</span>
+            Book<span className="text-primary-300">Bites</span>
           </span>
         </Link>
 
@@ -61,7 +57,7 @@ export default function SiteHeader() {
             <Link
               key={item.href}
               href={item.href}
-              className="text-sm font-medium text-muted hover:text-primary-300 transition-colors relative after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-primary-300 after:transition-all hover:after:w-full"
+              className="text-sm font-medium text-muted hover:text-primary-300 transition-colors"
             >
               {item.label}
             </Link>
@@ -69,10 +65,19 @@ export default function SiteHeader() {
         </nav>
 
         {/* Desktop CTA */}
-        <div className="hidden md:block">
-          <Button href="/inquire" variant="primary" size="sm">
-            Book Now
-          </Button>
+        <div className="hidden md:flex items-center gap-4">
+          <Link
+            href="/login"
+            className="text-sm font-medium text-muted hover:text-charcoal transition-colors"
+          >
+            Log In
+          </Link>
+          <Link
+            href="/register"
+            className="px-5 py-2.5 bg-primary-300 text-white text-sm font-semibold rounded-lg hover:bg-primary-400 transition-colors"
+          >
+            Get Started Free
+          </Link>
         </div>
 
         {/* Mobile Menu Button */}
@@ -92,7 +97,6 @@ export default function SiteHeader() {
           menuOpen ? 'visible' : 'invisible'
         )}
       >
-        {/* Backdrop */}
         <div
           className={cn(
             'absolute inset-0 bg-charcoal/20 backdrop-blur-sm transition-opacity duration-300',
@@ -100,8 +104,6 @@ export default function SiteHeader() {
           )}
           onClick={() => setMenuOpen(false)}
         />
-
-        {/* Drawer */}
         <div
           className={cn(
             'absolute right-0 top-0 h-full w-72 bg-white shadow-modal transition-transform duration-300',
@@ -119,10 +121,19 @@ export default function SiteHeader() {
                 {item.label}
               </Link>
             ))}
-            <div className="pt-4 mt-2 border-t border-[#E8D5D5]">
-              <Button href="/inquire" variant="primary" fullWidth size="md">
-                Book Now
-              </Button>
+            <div className="pt-4 mt-2 border-t border-gray-200 space-y-2">
+              <Link
+                href="/login"
+                className="block px-4 py-3 text-charcoal font-medium rounded-lg hover:bg-cream transition-colors"
+              >
+                Log In
+              </Link>
+              <Link
+                href="/register"
+                className="block px-4 py-3 bg-primary-300 text-white text-center font-semibold rounded-lg hover:bg-primary-400 transition-colors"
+              >
+                Get Started Free
+              </Link>
             </div>
           </nav>
         </div>

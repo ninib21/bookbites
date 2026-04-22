@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
-import { sendPaymentSubmissionNotificationToAdmin } from '@/lib/email'
 
 const paymentSubmittedSchema = z.object({
   bookingId: z.string().min(1, 'Booking ID is required.'),
@@ -15,34 +14,28 @@ export async function PATCH(request: NextRequest) {
     const body = await request.json()
     const parsed = paymentSubmittedSchema.parse(body)
 
-    const existingBooking = await prisma.booking.findUnique({
+    const existingBooking = await prisma.businessBooking.findUnique({
       where: { id: parsed.bookingId },
     })
 
     if (!existingBooking) {
       return NextResponse.json(
-        {
-          success: false,
-          message: 'Booking not found.',
-        },
+        { success: false, message: 'Booking not found.' },
         { status: 404 }
       )
     }
 
-    if (existingBooking.paymentStatus === 'approved') {
+    if (existingBooking.paymentStatus === 'APPROVED') {
       return NextResponse.json(
-        {
-          success: false,
-          message: 'This payment has already been approved.',
-        },
+        { success: false, message: 'This payment has already been approved.' },
         { status: 400 }
       )
     }
 
-    const booking = await prisma.booking.update({
+    const booking = await prisma.businessBooking.update({
       where: { id: parsed.bookingId },
       data: {
-        paymentStatus: 'submitted',
+        paymentStatus: 'SUBMITTED',
         paymentMethod: parsed.paymentMethod,
         paymentReference: parsed.paymentReference,
         paymentSubmittedAt: new Date(),
@@ -57,28 +50,24 @@ export async function PATCH(request: NextRequest) {
       },
     })
 
-    await prisma.bookingEvent.create({
+    await prisma.businessBookingEvent.create({
       data: {
         bookingId: parsed.bookingId,
         type: 'payment_submitted',
-        note: parsed.note?.trim()
-          ? `Client submitted payment. Method: ${parsed.paymentMethod}. Reference: ${parsed.paymentReference}. Note: ${parsed.note}`
-          : `Client submitted payment. Method: ${parsed.paymentMethod}. Reference: ${parsed.paymentReference}.`,
+        note: `Client submitted payment. Method: ${parsed.paymentMethod}. Reference: ${parsed.paymentReference}.`,
       },
     })
 
-    // Send notification email to admin
-    try {
-      await sendPaymentSubmissionNotificationToAdmin({
-        reference: existingBooking.reference,
-        customerName: existingBooking.customerName,
-        customerEmail: existingBooking.customerEmail,
-        paymentMethod: parsed.paymentMethod,
-        notes: parsed.note,
-      })
-    } catch (emailError) {
-      console.error('Failed to send payment submission email:', emailError)
-    }
+    // Create notification for business
+    await prisma.businessNotification.create({
+      data: {
+        businessId: existingBooking.businessId,
+        type: 'payment_submitted',
+        title: 'Payment Submitted',
+        message: `${existingBooking.customerName} submitted payment for booking ${existingBooking.reference}`,
+        actionUrl: `/dashboard/bookings/${existingBooking.id}`,
+      },
+    })
 
     return NextResponse.json({
       success: true,
@@ -90,20 +79,13 @@ export async function PATCH(request: NextRequest) {
 
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        {
-          success: false,
-          message: 'Invalid request data.',
-          errors: error.flatten(),
-        },
+        { success: false, message: 'Invalid request data.', errors: error.flatten() },
         { status: 400 }
       )
     }
 
     return NextResponse.json(
-      {
-        success: false,
-        message: 'Unable to submit payment confirmation.',
-      },
+      { success: false, message: 'Unable to submit payment confirmation.' },
       { status: 500 }
     )
   }
